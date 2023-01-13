@@ -35,11 +35,11 @@ def save_model(args, model, timestamp):
     if not os.path.exists(dir_path):
         os.mkdir(dir_path)
 
-    arg_path = os.path.join(dir_path + '/' + 'args.json')
+    # arg_path = os.path.join(dir_path + '/' + 'args.json')
 
-    if not os.path.exists(arg_path):
-        with open(arg_path, 'w') as fp:
-            json.dump(args, fp, sort_keys = True, indent = 4)
+    # if not os.path.exists(arg_path):
+    #     with open(arg_path, 'w') as fp:
+    #         json.dump(args, fp, sort_keys = True, indent = 4)
 
     model_p = 'model_federated'
     torch.save(model.state_dict(), dir_path +'/'+ model_p) 
