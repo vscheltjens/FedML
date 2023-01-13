@@ -177,9 +177,12 @@ class FedAvgAPI(object):
 
         logging.info("################local_test_on_all_clients : {}".format(round_idx))
 
-        train_metrics = {"num_samples": [], "num_correct": [], "losses": []}
+        # NEW
 
-        test_metrics = {"num_samples": [], "num_correct": [], "losses": []}
+        train_metrics = {'MAE': [], 'MAPE': [], 'MSE': [], 'MSLE': [], 'R_sq': []}
+        test_metrics = {'MAE': [], 'MAPE': [], 'MSE': [], 'MSLE': [], 'R_sq': []}
+
+        # END NEW
 
         client = self.client_list[0]
 
@@ -198,41 +201,101 @@ class FedAvgAPI(object):
             )
             # train data
             train_local_metrics = client.local_test(False)
-            train_metrics["num_samples"].append(copy.deepcopy(train_local_metrics["test_total"]))
-            train_metrics["num_correct"].append(copy.deepcopy(train_local_metrics["test_correct"]))
-            train_metrics["losses"].append(copy.deepcopy(train_local_metrics["test_loss"]))
+            train_metrics["MAE"].append(copy.deepcopy(train_local_metrics["MAE"]))
+            train_metrics["MAPE"].append(copy.deepcopy(train_local_metrics["MAPE"]))
+            train_metrics["MSE"].append(copy.deepcopy(train_local_metrics["MSE"]))
+            train_metrics["MSLE"].append(copy.deepcopy(train_local_metrics["MSLE"]))
+            train_metrics["R_sq"].append(copy.deepcopy(train_local_metrics["R_sq"]))
 
             # test data
             test_local_metrics = client.local_test(True)
-            test_metrics["num_samples"].append(copy.deepcopy(test_local_metrics["test_total"]))
-            test_metrics["num_correct"].append(copy.deepcopy(test_local_metrics["test_correct"]))
-            test_metrics["losses"].append(copy.deepcopy(test_local_metrics["test_loss"]))
+            test_metrics["MAE"].append(copy.deepcopy(test_local_metrics["MAE"]))
+            test_metrics["MAPE"].append(copy.deepcopy(test_local_metrics["MAPE"]))
+            test_metrics["MSE"].append(copy.deepcopy(test_local_metrics["MSE"]))
+            test_metrics["MSLE"].append(copy.deepcopy(test_local_metrics["MSLE"]))
+            test_metrics["R_sq"].append(copy.deepcopy(test_local_metrics["R_sq"]))
 
-        # test on training dataset
-        train_acc = sum(train_metrics["num_correct"]) / sum(train_metrics["num_samples"])
-        train_loss = sum(train_metrics["losses"]) / sum(train_metrics["num_samples"])
+        train_mae = sum(train_metrics["MAE"]) / self.args.client_num_in_total
+        train_loss = sum(train_metrics["MSLE"]) / self.args.client_num_in_total
 
         # test on test dataset
-        test_acc = sum(test_metrics["num_correct"]) / sum(test_metrics["num_samples"])
-        test_loss = sum(test_metrics["losses"]) / sum(test_metrics["num_samples"])
+        test_mae = sum(test_metrics["MAE"]) / self.args.client_num_in_total
+        test_loss = sum(test_metrics["MSLE"]) / self.args.client_num_in_total
 
-        stats = {"training_acc": train_acc, "training_loss": train_loss}
+        stats = {"train_MAE": train_mae, "training_loss": train_loss}
         if self.args.enable_wandb:
-            wandb.log({"Train/Acc": train_acc, "round": round_idx})
-            wandb.log({"Train/Loss": train_loss, "round": round_idx})
+            wandb.log({"TrainMAE": train_mae, "round": round_idx})
+            wandb.log({"TrainMSLE": train_loss, "round": round_idx})
 
-        mlops.log({"Train/Acc": train_acc, "round": round_idx})
-        mlops.log({"Train/Loss": train_loss, "round": round_idx})
+        mlops.log({"TrainMAE": train_mae, "round": round_idx})
+        mlops.log({"TrainMSLE": train_loss, "round": round_idx})
         logging.info(stats)
 
-        stats = {"test_acc": test_acc, "test_loss": test_loss}
+        stats = {"test_MAE": test_mae, "test_loss": test_loss}
         if self.args.enable_wandb:
-            wandb.log({"Test/Acc": test_acc, "round": round_idx})
-            wandb.log({"Test/Loss": test_loss, "round": round_idx})
+            wandb.log({"TestMAE": test_mae, "round": round_idx})
+            wandb.log({"TestMSLE": test_loss, "round": round_idx})
 
-        mlops.log({"Test/Acc": test_acc, "round": round_idx})
-        mlops.log({"Test/Loss": test_loss, "round": round_idx})
+        mlops.log({"TestMAE": test_mae, "round": round_idx})
+        mlops.log({"TestMSLE": test_loss, "round": round_idx})
         logging.info(stats)
+        
+        # train_metrics = {"num_samples": [], "num_correct": [], "losses": []}
+
+        # test_metrics = {"num_samples": [], "num_correct": [], "losses": []}
+
+        # client = self.client_list[0]
+
+        # for client_idx in range(self.args.client_num_in_total):
+        #     """
+        #     Note: for datasets like "fed_CIFAR100" and "fed_shakespheare",
+        #     the training client number is larger than the testing client number
+        #     """
+        #     if self.test_data_local_dict[client_idx] is None:
+        #         continue
+        #     client.update_local_dataset(
+        #         0,
+        #         self.train_data_local_dict[client_idx],
+        #         self.test_data_local_dict[client_idx],
+        #         self.train_data_local_num_dict[client_idx],
+        #     )
+        #     # train data
+        #     train_local_metrics = client.local_test(False)
+        #     train_metrics["num_samples"].append(copy.deepcopy(train_local_metrics["test_total"]))
+        #     train_metrics["num_correct"].append(copy.deepcopy(train_local_metrics["test_correct"]))
+        #     train_metrics["losses"].append(copy.deepcopy(train_local_metrics["test_loss"]))
+
+        #     # test data
+        #     test_local_metrics = client.local_test(True)
+        #     test_metrics["num_samples"].append(copy.deepcopy(test_local_metrics["test_total"]))
+        #     test_metrics["num_correct"].append(copy.deepcopy(test_local_metrics["test_correct"]))
+        #     test_metrics["losses"].append(copy.deepcopy(test_local_metrics["test_loss"]))
+
+        # # test on training dataset
+        # train_acc = sum(train_metrics["num_correct"]) / sum(train_metrics["num_samples"])
+        # train_loss = sum(train_metrics["losses"]) / sum(train_metrics["num_samples"])
+
+        # # test on test dataset
+        # test_acc = sum(test_metrics["num_correct"]) / sum(test_metrics["num_samples"])
+        # test_loss = sum(test_metrics["losses"]) / sum(test_metrics["num_samples"])
+
+        # stats = {"training_acc": train_acc, "training_loss": train_loss}
+        # if self.args.enable_wandb:
+        #     wandb.log({"Train/Acc": train_acc, "round": round_idx})
+        #     wandb.log({"Train/Loss": train_loss, "round": round_idx})
+
+        # mlops.log({"Train/Acc": train_acc, "round": round_idx})
+        # mlops.log({"Train/Loss": train_loss, "round": round_idx})
+        # logging.info(stats)
+
+        # stats = {"test_acc": test_acc, "test_loss": test_loss}
+        # if self.args.enable_wandb:
+        #     wandb.log({"Test/Acc": test_acc, "round": round_idx})
+        #     wandb.log({"Test/Loss": test_loss, "round": round_idx})
+
+        # mlops.log({"Test/Acc": test_acc, "round": round_idx})
+        # mlops.log({"Test/Loss": test_loss, "round": round_idx})
+        # logging.info(stats)
 
     def _local_test_on_validation_set(self, round_idx):
 
