@@ -6,8 +6,11 @@ import numpy as np
 import torch
 import wandb
 
+from datetime import datetime
+
 from fedml import mlops
 from fedml.ml.trainer.trainer_creator import create_model_trainer
+from fedml.ml.trainer.utils import save_model
 from .client import Client
 
 
@@ -120,6 +123,11 @@ class FedAvgAPI(object):
                     self._local_test_on_all_clients(round_idx)
 
             mlops.log_round_info(self.args.comm_round, round_idx)
+
+        #Save the model
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        save_model(self.args, self.model, timestamp)
 
         mlops.log_training_finished_status()
         mlops.log_aggregation_finished_status()
