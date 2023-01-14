@@ -30,7 +30,7 @@ class Metrics():
 
 def save_model(args, model, timestamp):
     stamp = 'training_{}'.format(timestamp)
-    dir_path = os.path.join(args.model_dir, stamp)
+    dir_path = os.path.join(args.dist_model_dir, stamp)
 
     if not os.path.exists(dir_path):
         os.mkdir(dir_path)
@@ -41,6 +41,6 @@ def save_model(args, model, timestamp):
     #     with open(arg_path, 'w') as fp:
     #         json.dump(args, fp, sort_keys = True, indent = 4)
 
-    model_p = 'model_federated'
+    model_p = 'trained_model'
     torch.save(model.state_dict(), dir_path +'/'+ model_p) 
 

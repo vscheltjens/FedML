@@ -3,7 +3,7 @@ import torch
 from torch import nn
 
 from ...core.alg_frame.client_trainer import ClientTrainer
-from .utils import MSLELoss, Metrics
+from model.utils import MSLELoss, Metrics
 
 
 class ModelTrainerICU(ClientTrainer):

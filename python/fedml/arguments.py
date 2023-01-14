@@ -56,6 +56,8 @@ def add_args():
     # default arguments
     parser.add_argument("--role", type=str, default="client")
 
+    parser.add_argument("--central_training", type=int, default=0)
+
     args, unknown = parser.parse_known_args()
     return args
 
