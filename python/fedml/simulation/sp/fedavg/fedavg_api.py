@@ -139,6 +139,10 @@ class FedAvgAPI(object):
             num_clients = min(client_num_per_round, client_num_in_total)
             if self.args.client_selection_seed:
                 np.random.seed(round_idx)  # make sure for each comparison, we are selecting the same clients each round 
+                logging.info("client_selection_seed = %s" % str(round_idx))
+            else: 
+                np.random.seed(self.args.random_seed) 
+                logging.info("client_selection_seed = %s" % str(self.args.random_seed))        
             client_indexes = np.random.choice(range(client_num_in_total), num_clients, replace=False)
         logging.info("client_indexes = %s" % str(client_indexes))
         return client_indexes
