@@ -49,7 +49,13 @@ def init(args=None):
     """
     os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
 
-    seed = args.random_seed
+    if not args.client_selection_seed:
+        rng = np.random.default_rng(seed=None)
+        rseed = int(rng.integers(123456789, size=1))
+        seed = rseed
+    else:
+        seed = args.random_seed
+    
     random.seed(seed)
     np.random.seed(seed)
     torch.manual_seed(seed)
