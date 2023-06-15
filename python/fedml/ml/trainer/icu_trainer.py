@@ -61,6 +61,7 @@ class ModelTrainerICU(ClientTrainer):
                 outputs = outputs.to(device)
                 
                 #backpropagation and gradient calculation
+                print(outputs.size(), target.size())
                 loss = criterion(outputs, target) 
                 loss.backward()
 
