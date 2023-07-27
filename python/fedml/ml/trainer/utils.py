@@ -27,6 +27,18 @@ class Metrics():
     msle = metrics.mean_squared_log_error(true, pred)#(true+1, pred+1)
     R_sq = metrics.r2_score(true, pred)
     return [mae, mape, mse, msle, R_sq]
+  
+  def clf_metrics(total, correct, true, pred):
+    #accuracy
+    proba = torch.exp(pred)
+    top_p, top_class = proba.topk(1, dim=1)
+    equals = top_class == true.view(*top_class.shape)
+
+    _, predicted = torch.max(pred.data, 1)
+    total += true.size(0)
+    correct += (predicted == true).sum().item()
+
+    return total, correct, predicted, true
 
 def save_model(args, model, timestamp):
     stamp = 'training_{}'.format(timestamp)
