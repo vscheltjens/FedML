@@ -83,7 +83,7 @@ class ModelTrainerCXR(ClientTrainer):
         total = 0 ; correct = 0
         targets_acc = [] ; outputs_acc = []
         
-        metrics = {"Acc_val": 0, "Acc_res_val": 0, "F1_val": 0}
+        metrics = {"Acc": 0, "Acc_res": 0, "F1": 0, "Loss": 0}
         criterion = nn.NLLLoss().to(device)
 
         with torch.no_grad():
@@ -116,9 +116,10 @@ class ModelTrainerCXR(ClientTrainer):
 
             f1 = f1_score(targets_y, outputs_y, average='micro')
             acc_ref = accuracy_score(targets_y, outputs_y)
+            loss = running_loss/(i+1)
 
             #calculate the epoch level metrics
-            test_metrics = [acc, acc_ref, f1]
+            test_metrics = [acc, acc_ref, f1, loss]
             
             
             for i, m in enumerate(metrics.keys()):
