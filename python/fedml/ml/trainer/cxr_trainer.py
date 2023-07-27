@@ -5,7 +5,7 @@ import torch.nn as nn
 from sklearn.metrics import accuracy_score, f1_score
 
 from ...core.alg_frame.client_trainer import ClientTrainer
-from utils import MSLELoss, Metrics
+from model.utils import MSLELoss, Metrics
 
 
 class ModelTrainerCXR(ClientTrainer):
