@@ -76,7 +76,7 @@ class ModelTrainerCXR(ClientTrainer):
                 last_loss = running_loss/(i+1)
                 
                 #Get all the metrics and not just loss
-                total, correct, predicted, true = Metrics.clf_metrics(total, correct, target.cpu().detach(), output.cpu().detach())
+                total, correct, predicted, true = Metrics.clf_metrics(total, correct, target.cpu().detach(), outputs.cpu().detach())
                 print(f'Correct: {correct}, total: {total}')
                 acc = correct / total
 
