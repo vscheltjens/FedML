@@ -46,7 +46,9 @@ class ModelTrainerCXR(ClientTrainer):
 
         epoch_loss = []
         for epoch in range(args.epochs):
-            batch_loss = []
+            last_loss = 0. ; running_loss = 0. 
+            total = 0 ; correct = 0
+            targets_acc = [] ; outputs_acc = []
             for i, batch in enumerate(train_data):
                 inputs, target = batch
                 inputs, target = inputs.to(device), target.to(device)
@@ -69,8 +71,30 @@ class ModelTrainerCXR(ClientTrainer):
                 #Adjust model weights
                 optimizer.step()        
                 
-                batch_loss.append(loss.item())
-            epoch_loss.append(sum(batch_loss) / len(batch_loss))
+                # update running training loss
+                running_loss += loss.item()
+                last_loss = running_loss/(i+1)
+                
+                #Get all the metrics and not just loss
+                total, correct, predicted, true = Metrics.clf_metrics(total, correct, target.cpu().detach(), output.cpu().detach())
+                print(f'Correct: {correct}, total: {total}')
+                acc = correct / total
+
+                outputs_acc.append(predicted)
+                targets_acc.append(true)
+
+                #print some information to stdout
+                print('Epoch {}, batch {} ------ train_loss: {} ------ average train_loss: {} ------ accumulated train_accuracy: {}'.format(epoch, i + 1, loss.item(), last_loss, acc)) 
+
+            outputs_y = np.concatenate(outputs_acc)
+            targets_y = np.concatenate(targets_acc)
+
+            f1 = f1_score(targets_y, outputs_y, average='micro')
+            acc_ref = accuracy_score(targets_y, outputs_y)
+
+            #calculate the epoch level metrics
+            epoch_metrics = [acc, acc_ref, f1, last_loss]
+            print(f'epoch_metrics {epoch_metrics}')
 
 
     def test(self, test_data, device, args):
@@ -102,6 +126,7 @@ class ModelTrainerCXR(ClientTrainer):
             
                 # Gather data and report
                 running_loss += loss.item()
+                print(f'test loss {running_loss/(i+1)}')
 
                 #Get all the metrics and not just loss
                 total, correct, predicted, true = Metrics.clf_metrics(total, correct, target.cpu().detach(), outputs.cpu().detach())
@@ -124,5 +149,6 @@ class ModelTrainerCXR(ClientTrainer):
             
             for i, m in enumerate(metrics.keys()):
                 metrics[m] = test_metrics[i]
+                print(f' test metrics: {test_metrics}, {metrics}')
 
             return metrics

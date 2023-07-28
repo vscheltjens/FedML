@@ -277,6 +277,7 @@ class FedAvgAPI(object):
             logging.info(stats)
 
         elif self.args.type == 'classification':
+            print(f' train metrics: {train_metrics}, test metrics {test_metrics}')
             train_acc = sum(train_metrics["Acc"]) / self.args.client_num_in_total
             train_loss = sum(train_metrics["Loss"]) / self.args.client_num_in_total
 
