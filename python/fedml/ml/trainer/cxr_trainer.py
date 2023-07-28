@@ -54,7 +54,7 @@ class ModelTrainerCXR(ClientTrainer):
                 target = target.type(torch.LongTensor).to(device)
                     
                 #zero grad optimizer for every batch
-                # model.zero_grad() #test this
+                model.zero_grad() #test this
                 optimizer.zero_grad()
 
                 #run model

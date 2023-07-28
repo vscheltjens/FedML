@@ -276,7 +276,7 @@ class FedAvgAPI(object):
             mlops.log({"TestMSLE": test_loss, "round": round_idx})
             logging.info(stats)
 
-        elif self.args.type == 'regression':
+        elif self.args.type == 'classification':
             train_acc = sum(train_metrics["Acc"]) / self.args.client_num_in_total
             train_loss = sum(train_metrics["Loss"]) / self.args.client_num_in_total
 
