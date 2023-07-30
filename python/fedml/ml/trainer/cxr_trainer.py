@@ -38,7 +38,7 @@ class ModelTrainerCXR(ClientTrainer):
             )
         elif args.client_optimizer == "adamw":
             optimizer = torch.optim.AdamW(
-                filter(lambda p: p.requires_grad, self.model.classifier.parameters()),
+                filter(lambda p: p.requires_grad, self.model.parameters()),
                 lr=args.learning_rate,
                 weight_decay=args.weight_decay,
                 amsgrad=True,
