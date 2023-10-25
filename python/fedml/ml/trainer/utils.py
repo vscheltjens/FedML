@@ -4,6 +4,7 @@ import json
 import torch
 import torch.nn as nn
 from sklearn import metrics
+from torchmetrics.classification import MultilabelAUROC
 
 #MSLE Loss and Metrics Class
 class MSLELoss(nn.Module):
@@ -28,17 +29,22 @@ class Metrics():
     R_sq = metrics.r2_score(true, pred)
     return [mae, mape, mse, msle, R_sq]
   
-  def clf_metrics(total, correct, true, pred):
-    #accuracy
-    proba = torch.exp(pred)
-    top_p, top_class = proba.topk(1, dim=1)
-    equals = top_class == true.view(*top_class.shape)
+  def auc_metrics(labels, outputs):
+        competition_tasks = torch.ByteTensor([1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0])
 
-    _, predicted = torch.max(pred.data, 1)
-    total += true.size(0)
-    correct += (predicted == true).sum().item()
+        #get the corresponding values
+        labels_sub = labels[:, competition_tasks].cpu().squeeze()
+        preds_sub = outputs[:, competition_tasks].detach().cpu().squeeze()
 
-    return total, correct, predicted, true
+        auc = MultilabelAUROC(num_labels=5, average="macro", thresholds=None)
+        auc_lab = MultilabelAUROC(num_labels=5, average=None, thresholds=None)
+
+        labels_sub = labels_sub.long()
+
+        avg_auc = auc(preds_sub, labels_sub)
+        label_auc = auc_lab(preds_sub, labels_sub)
+
+        return avg_auc, label_auc
 
 def save_model(args, model, timestamp):
     stamp = 'training_{}'.format(timestamp)

@@ -197,8 +197,8 @@ class FedAvgAPI(object):
             test_metrics = {'MAE': [], 'MAPE': [], 'MSE': [], 'MSLE': [], 'R_sq': []}
 
         elif self.args.type == 'classification':
-            train_metrics = {'Acc': [], 'Acc_res': [], 'F1': [], 'Loss': []}
-            test_metrics = {'Acc': [], 'Acc_res': [], 'F1': [], 'Loss': []}
+            train_metrics = {'AUC1': [], 'AUC2': [], 'AUC3': [], 'AUC4': [], 'AUC5': []}
+            test_metrics = {'AUC1': [], 'AUC2': [], 'AUC3': [], 'AUC4': [], 'AUC5': []}
 
         # END NEW
 
@@ -235,20 +235,22 @@ class FedAvgAPI(object):
                 test_metrics["MSLE"].append(copy.deepcopy(test_local_metrics["MSLE"]))
                 test_metrics["R_sq"].append(copy.deepcopy(test_local_metrics["R_sq"]))
             
-            elif self.args.type == 'regression':
+            elif self.args.type == 'classification':
                 # train data
                 train_local_metrics = client.local_test(False)
-                train_metrics["Acc"].append(copy.deepcopy(train_local_metrics["Acc"]))
-                train_metrics["Acc_res"].append(copy.deepcopy(train_local_metrics["Acc_res"]))
-                train_metrics["F1"].append(copy.deepcopy(train_local_metrics["F1"]))
-                train_metrics["Loss"].append(copy.deepcopy(train_local_metrics["Loss"]))
+                train_metrics["AUC1"].append(copy.deepcopy(train_local_metrics["AUC1"]))
+                train_metrics["AUC2"].append(copy.deepcopy(train_local_metrics["AUC2"]))
+                train_metrics["AUC3"].append(copy.deepcopy(train_local_metrics["AUC3"]))
+                train_metrics["AUC4"].append(copy.deepcopy(train_local_metrics["AUC4"]))
+                train_metrics["AUC5"].append(copy.deepcopy(train_local_metrics["AUC5"]))
 
                 # test data
                 test_local_metrics = client.local_test(True)
-                test_metrics["Acc"].append(copy.deepcopy(test_local_metrics["Acc"]))
-                test_metrics["Acc_res"].append(copy.deepcopy(test_local_metrics["Acc_res"]))
-                test_metrics["F1"].append(copy.deepcopy(test_local_metrics["F1"]))
-                test_metrics["Loss"].append(copy.deepcopy(test_local_metrics["Loss"]))
+                test_metrics["AUC1"].append(copy.deepcopy(test_local_metrics["AUC1"]))
+                test_metrics["AUC2"].append(copy.deepcopy(test_local_metrics["AUC2"]))
+                test_metrics["AUC3"].append(copy.deepcopy(test_local_metrics["AUC3"]))
+                test_metrics["AUC4"].append(copy.deepcopy(test_local_metrics["AUC4"]))
+                test_metrics["AUC5"].append(copy.deepcopy(test_local_metrics["AUC5"]))
 
         if self.args.type == 'regression':
             train_mae = sum(train_metrics["MAE"]) / self.args.client_num_in_total
@@ -277,30 +279,34 @@ class FedAvgAPI(object):
             logging.info(stats)
 
         elif self.args.type == 'classification':
-            print(f' train metrics: {train_metrics}, test metrics {test_metrics}')
-            train_acc = sum(train_metrics["Acc"]) / self.args.client_num_in_total
-            train_loss = sum(train_metrics["Loss"]) / self.args.client_num_in_total
+            print(f' train metrics: {train_metrics}, test metrics {test_metrics}, round: {round_idx}')
+            train_auc1 = sum(train_metrics["AUC1"]) / self.args.client_num_in_total
+            train_auc2 = sum(train_metrics["AUC2"]) / self.args.client_num_in_total
+            train_auc3 = sum(train_metrics["AUC3"]) / self.args.client_num_in_total
+            train_auc4 = sum(train_metrics["AUC4"]) / self.args.client_num_in_total
+            train_auc5 = sum(train_metrics["AUC5"]) / self.args.client_num_in_total
 
-            # test on test dataset
-            test_acc = sum(test_metrics["Acc"]) / self.args.client_num_in_total
-            test_loss = sum(test_metrics["Loss"]) / self.args.client_num_in_total
+            #test on test dataset
+            test_auc1 = sum(test_metrics["AUC1"]) / self.args.client_num_in_total
+            test_auc2 = sum(test_metrics["AUC2"]) / self.args.client_num_in_total
+            test_auc3 = sum(test_metrics["AUC3"]) / self.args.client_num_in_total
+            test_auc4 = sum(test_metrics["AUC4"]) / self.args.client_num_in_total
+            test_auc5 = sum(test_metrics["AUC5"]) / self.args.client_num_in_total
 
-            stats = {"train_Acc": train_acc, "training_loss": train_loss}
+            stats = {"train_auc1": train_auc1, "train_auc2": train_auc2, "train_auc3": train_auc3, "train_auc4": train_auc4, "train_auc5": train_auc5, "round": round_idx}
             if self.args.enable_wandb:
-                wandb.log({"TrainAcc": train_acc, "round": round_idx})
-                wandb.log({"TrainLoss": train_loss, "round": round_idx})
+                wandb.log(stats)
 
-            mlops.log({"TrainAcc": train_acc, "round": round_idx})
-            mlops.log({"TrainLoss": train_loss, "round": round_idx})
+            # mlops.log({"TrainAcc": train_acc, "round": round_idx})
+            # mlops.log({"TrainLoss": train_loss, "round": round_idx})
             logging.info(stats)
 
-            stats = {"test_Acc": test_acc, "test_loss": test_loss}
+            stats = {"test_auc1": test_auc1, "test_auc2": test_auc2, "test_auc3": test_auc3, "test_auc4": test_auc4, "test_auc5": test_auc5, "round": round_idx}
             if self.args.enable_wandb:
-                wandb.log({"TestAcc": test_acc, "round": round_idx})
-                wandb.log({"TestLoss": test_loss, "round": round_idx})
+                wandb.log(stats)
 
-            mlops.log({"TestAcc": test_acc, "round": round_idx})
-            mlops.log({"TestLoss": test_loss, "round": round_idx})
+            # mlops.log({"TestAcc": test_acc, "round": round_idx})
+            # mlops.log({"TestLoss": test_loss, "round": round_idx})
             logging.info(stats)
         
         # train_metrics = {"num_samples": [], "num_correct": [], "losses": []}

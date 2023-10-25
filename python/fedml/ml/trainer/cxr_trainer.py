@@ -22,7 +22,8 @@ class ModelTrainerCXR(ClientTrainer):
         model.train()
 
         # train and update
-        criterion = nn.NLLLoss().to(device)
+        criterion = nn.BCEWithLogitsLoss(reduction='sum', pos_weight=torch.ones([args.num_classes])).to(device)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer=optimizer, T_0=args.batch_size, T_mult=1)
 
         if args.client_optimizer == "sgd":
             optimizer = torch.optim.SGD(
@@ -39,32 +40,31 @@ class ModelTrainerCXR(ClientTrainer):
         elif args.client_optimizer == "adamw":
             optimizer = torch.optim.AdamW(
                 filter(lambda p: p.requires_grad, self.model.parameters()),
-                lr=args.learning_rate,
-                weight_decay=args.weight_decay,
+                lr=1e-3,
+                weight_decay=1e-5,
                 amsgrad=True,
             )
 
         epoch_loss = []
         for epoch in range(args.epochs):
             last_loss = 0. ; running_loss = 0. 
-            total = 0 ; correct = 0
-            targets_acc = [] ; outputs_acc = []
+            running_auc = 0.
+            running_metrics = [0., 0., 0., 0., 0.]
+            
+            scheduler.step()
+
             for i, batch in enumerate(train_data):
                 inputs, target = batch
                 inputs, target = inputs.to(device), target.to(device)
-
-                target = target.type(torch.LongTensor).to(device)
                     
                 #zero grad optimizer for every batch
-                model.zero_grad() #test this
                 optimizer.zero_grad()
 
                 #run model
-                outputs = model(inputs.float())
+                outputs = model(inputs)
                 outputs = outputs.to(device)
                 
                 #backpropagation and gradient calculation
-                print(outputs.size(), target.size())
                 loss = criterion(outputs, target) 
                 loss.backward()
 
@@ -75,26 +75,26 @@ class ModelTrainerCXR(ClientTrainer):
                 running_loss += loss.item()
                 last_loss = running_loss/(i+1)
                 
-                #Get all the metrics and not just loss
-                total, correct, predicted, true = Metrics.clf_metrics(total, correct, target.cpu().detach(), outputs.cpu().detach())
-                print(f'Correct: {correct}, total: {total}')
-                acc = correct / total
+                batch_auc, batch_label_auc = Metrics.auc_metrics(target, outputs)
 
-                outputs_acc.append(predicted)
-                targets_acc.append(true)
+                running_auc += batch_auc.item()
+                running_metrics = [*map(sum, zip(running_metrics, batch_label_auc.tolist()))]
 
-                #print some information to stdout
-                print('Epoch {}, batch {} ------ train_loss: {} ------ average train_loss: {} ------ accumulated train_accuracy: {}'.format(epoch, i + 1, loss.item(), last_loss, acc)) 
 
-            outputs_y = np.concatenate(outputs_acc)
-            targets_y = np.concatenate(targets_acc)
+                # if (i+1) % args.checkpoint == 0:
+                #     print('Epoch {}, batch {} ---------- train_loss: {} ---------- average train_loss: {} ---------- average train_AUC {}.'.format(epoch_n, i + 1, loss.item(), last_loss, running_auc/(i+1)))
+                    # wandb.log({
+                    #     'batch_train_loss': last_loss,
+                    #     'batch_train_auc': running_auc/(i+1),
+                    #     }) 
 
-            f1 = f1_score(targets_y, outputs_y, average='micro')
-            acc_ref = accuracy_score(targets_y, outputs_y)
+                # if i == 10:
+                #     break
 
-            #calculate the epoch level metrics
-            epoch_metrics = [acc, acc_ref, f1, last_loss]
-            print(f'epoch_metrics {epoch_metrics}')
+            avg_auc = running_auc/(i+1)
+            epoch_label_auc = [metric/(i+1) for metric in running_metrics]
+
+            print(last_loss, avg_auc, epoch_label_auc)
 
 
     def test(self, test_data, device, args):
@@ -104,21 +104,19 @@ class ModelTrainerCXR(ClientTrainer):
         model.eval()
 
         last_loss = 0. ; running_loss = 0. 
-        total = 0 ; correct = 0
-        targets_acc = [] ; outputs_acc = []
+        running_auc = 0.
+        running_metrics = [0., 0., 0., 0., 0.]
         
-        metrics = {"Acc": 0, "Acc_res": 0, "F1": 0, "Loss": 0}
-        criterion = nn.NLLLoss().to(device)
+        metrics = {"AUC1": 0, "AUC2": 0, "AUC3": 0, "AUC4": 0, "AUC5": 0}
+        criterion = nn.BCEWithLogitsLoss(reduction='sum', pos_weight=torch.ones([args.num_classes])).to(device)
 
         with torch.no_grad():
             for i, batch in enumerate(test_data):
                 inputs, target = batch
                 inputs, target = inputs.to(device), target.to(device)
 
-                target = target.type(torch.LongTensor).to(device)
-
                 #run model
-                outputs = model(inputs.float())
+                outputs = model(inputs)
                 outputs = outputs.to(device)
                 
                 #backpropagation and gradient calculation
@@ -126,29 +124,33 @@ class ModelTrainerCXR(ClientTrainer):
             
                 # Gather data and report
                 running_loss += loss.item()
-                print(f'test loss {running_loss/(i+1)}')
+                last_loss = running_loss/(i+1)
 
-                #Get all the metrics and not just loss
-                total, correct, predicted, true = Metrics.clf_metrics(total, correct, target.cpu().detach(), outputs.cpu().detach())
-                print(f'Correct: {correct}, total: {total}')
-                acc = correct / total
+                batch_auc, batch_label_auc = Metrics.auc_metrics(target, outputs)
 
-                outputs_acc.append(predicted)
-                targets_acc.append(true)
+                running_auc += batch_auc.item()
+                running_metrics = [*map(sum, zip(running_metrics, batch_label_auc.tolist()))]
 
-            outputs_y = np.concatenate(outputs_acc)
-            targets_y = np.concatenate(targets_acc)
 
-            f1 = f1_score(targets_y, outputs_y, average='micro')
-            acc_ref = accuracy_score(targets_y, outputs_y)
-            loss = running_loss/(i+1)
+                # if (i+1) % args.checkpoint == 0:
+                #     #Print info to stdout
+                #     print('Epoch {}, batch {} ---------- val_loss: {} ---------- average val_loss: {} ---------- average val_AUC {}.'.format(epoch_n, i + 1, loss.item(), last_loss, running_auc/(i+1)))
+                #     wandb.log({
+                #         'batch_val_loss': last_loss,
+                #         'batch_val_auc': running_auc/(i+1),
+                #         }) 
 
-            #calculate the epoch level metrics
-            test_metrics = [acc, acc_ref, f1, loss]
+                # # if i == 5:
+                # #     break
+
+            avg_auc = running_auc/(i+1)
+            epoch_label_auc = [metric/(i+1) for metric in running_metrics]
+
+            print(last_loss, avg_auc, epoch_label_auc)
             
             
             for i, m in enumerate(metrics.keys()):
-                metrics[m] = test_metrics[i]
-                print(f' test metrics: {test_metrics}, {metrics}')
+                metrics[m] = epoch_label_auc[i]
+                print(f' test metrics: {epoch_label_auc}, {metrics}')
 
             return metrics
