@@ -22,8 +22,7 @@ class ModelTrainerCXR(ClientTrainer):
         model.train()
 
         # train and update
-        criterion = nn.BCEWithLogitsLoss(reduction='sum', pos_weight=torch.ones([args.num_classes])).to(device)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer=optimizer, T_0=args.batch_size, T_mult=1)
+
 
         if args.client_optimizer == "sgd":
             optimizer = torch.optim.SGD(
@@ -44,6 +43,9 @@ class ModelTrainerCXR(ClientTrainer):
                 weight_decay=1e-5,
                 amsgrad=True,
             )
+
+        criterion = nn.BCEWithLogitsLoss(reduction='sum', pos_weight=torch.ones([args.num_classes])).to(device)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer=optimizer, T_0=args.batch_size, T_mult=1)
 
         epoch_loss = []
         for epoch in range(args.epochs):
