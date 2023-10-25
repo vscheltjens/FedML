@@ -2,6 +2,7 @@
 import torch
 import numpy as np
 import torch.nn as nn
+import wandb
 from sklearn.metrics import accuracy_score, f1_score
 
 from ...core.alg_frame.client_trainer import ClientTrainer
@@ -83,12 +84,12 @@ class ModelTrainerCXR(ClientTrainer):
                 running_metrics = [*map(sum, zip(running_metrics, batch_label_auc.tolist()))]
 
 
-                # if (i+1) % args.checkpoint == 0:
-                #     print('Epoch {}, batch {} ---------- train_loss: {} ---------- average train_loss: {} ---------- average train_AUC {}.'.format(epoch_n, i + 1, loss.item(), last_loss, running_auc/(i+1)))
-                    # wandb.log({
-                    #     'batch_train_loss': last_loss,
-                    #     'batch_train_auc': running_auc/(i+1),
-                    #     }) 
+                if (i+1) % args.checkpoint == 0:
+                    print('Epoch {}, batch {} ---------- train_loss: {} ---------- average train_loss: {} ---------- average train_AUC {}.'.format(epoch, i + 1, loss.item(), last_loss, running_auc/(i+1)))
+                    wandb.log({
+                        'batch_train_loss': last_loss,
+                        'batch_train_auc': running_auc/(i+1),
+                        }) 
 
                 # if i == 10:
                 #     break
@@ -134,13 +135,13 @@ class ModelTrainerCXR(ClientTrainer):
                 running_metrics = [*map(sum, zip(running_metrics, batch_label_auc.tolist()))]
 
 
-                # if (i+1) % args.checkpoint == 0:
-                #     #Print info to stdout
-                #     print('Epoch {}, batch {} ---------- val_loss: {} ---------- average val_loss: {} ---------- average val_AUC {}.'.format(epoch_n, i + 1, loss.item(), last_loss, running_auc/(i+1)))
-                #     wandb.log({
-                #         'batch_val_loss': last_loss,
-                #         'batch_val_auc': running_auc/(i+1),
-                #         }) 
+                if (i+1) % args.checkpoint == 0:
+                    #Print info to stdout
+                    print('batch {} ---------- val_loss: {} ---------- average val_loss: {} ---------- average val_AUC {}.'.format( i + 1, loss.item(), last_loss, running_auc/(i+1)))
+                    wandb.log({
+                        'batch_val_loss': last_loss,
+                        'batch_val_auc': running_auc/(i+1),
+                        }) 
 
                 # # if i == 5:
                 # #     break
