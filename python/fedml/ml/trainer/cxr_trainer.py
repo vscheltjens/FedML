@@ -130,6 +130,7 @@ class ModelTrainerCXR(ClientTrainer):
                 last_loss = running_loss/(i+1)
 
                 batch_auc, batch_label_auc = Metrics.auc_metrics(target, outputs)
+                print(f'Target info: {target.shape}, output info: {outputs.shape}')
 
                 running_auc += batch_auc.item()
                 running_metrics = [*map(sum, zip(running_metrics, batch_label_auc.tolist()))]
@@ -154,6 +155,7 @@ class ModelTrainerCXR(ClientTrainer):
             
             for i, m in enumerate(metrics.keys()):
                 metrics[m] = epoch_label_auc[i]
-                print(f' test metrics: {epoch_label_auc}, {metrics}')
+            
+            print(f' test metrics: {epoch_label_auc}, {metrics}')
 
             return metrics
