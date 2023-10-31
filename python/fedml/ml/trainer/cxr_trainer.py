@@ -77,9 +77,8 @@ class ModelTrainerCXR(ClientTrainer):
                 # update running training loss
                 running_loss += loss.item()
                 last_loss = running_loss/(i+1)
-                
+
                 print(f'Target info: {target.shape}, output info: {outputs.shape}')
-                print(f'Target info: {target}, output info: {outputs}')
                 
                 batch_auc, batch_label_auc = Metrics.auc_metrics(target, outputs)
 
@@ -132,7 +131,6 @@ class ModelTrainerCXR(ClientTrainer):
                 running_loss += loss.item()
                 last_loss = running_loss/(i+1)
                 print(f'Target info: {target.shape}, output info: {outputs.shape}')
-                print(f'Target info: {target}, output info: {outputs}')
 
                 batch_auc, batch_label_auc = Metrics.auc_metrics(target, outputs)
 
