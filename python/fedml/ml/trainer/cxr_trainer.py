@@ -78,6 +78,9 @@ class ModelTrainerCXR(ClientTrainer):
                 running_loss += loss.item()
                 last_loss = running_loss/(i+1)
                 
+                print(f'Target info: {target.shape}, output info: {outputs.shape}')
+                print(f'Target info: {target}, output info: {outputs}')
+                
                 batch_auc, batch_label_auc = Metrics.auc_metrics(target, outputs)
 
                 running_auc += batch_auc.item()
@@ -128,9 +131,10 @@ class ModelTrainerCXR(ClientTrainer):
                 # Gather data and report
                 running_loss += loss.item()
                 last_loss = running_loss/(i+1)
+                print(f'Target info: {target.shape}, output info: {outputs.shape}')
+                print(f'Target info: {target}, output info: {outputs}')
 
                 batch_auc, batch_label_auc = Metrics.auc_metrics(target, outputs)
-                print(f'Target info: {target.shape}, output info: {outputs.shape}')
 
                 running_auc += batch_auc.item()
                 running_metrics = [*map(sum, zip(running_metrics, batch_label_auc.tolist()))]
