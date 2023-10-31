@@ -41,7 +41,12 @@ class Metrics():
 
         labels_sub = labels_sub.long()
 
-        print(f'sub auc info {preds_sub.shape}: {labels_sub.shape}')
+        if len(preds_sub.shape) < 2:
+            preds_sub = preds_sub.expand((1,5))
+        if len(labels_sub.shape) < 2:
+            labels_sub = labels_sub.expand((1,5))
+
+        # print(f'sub auc info {preds_sub.shape}: {labels_sub.shape}')
         avg_auc = auc(preds_sub, labels_sub)
         label_auc = auc_lab(preds_sub, labels_sub)
 
