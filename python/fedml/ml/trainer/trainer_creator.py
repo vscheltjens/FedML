@@ -10,9 +10,9 @@ def create_model_trainer(model, args):
         model_trainer = ModelTrainerTAGPred(model, args)
     elif args.dataset in ["fed_shakespeare", "stackoverflow_nwp"]:
         model_trainer = ModelTrainerNWP(model, args)
-    if args.dataset == "ICU":
+    elif args.dataset == "ICU":
         model_trainer = ModelTrainerICU(model, args)
-    if args.dataset == "CXR":
+    elif args.dataset == "CXR":
         model_trainer = ModelTrainerCXR(model, args)
     else:  # default model trainer is for classification problem
         model_trainer = ModelTrainerCLS(model, args)
